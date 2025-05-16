@@ -27,6 +27,6 @@ namespace SuperShopV2.Data.Entities
         public bool IsAvailable { get; set; }
 
         [DisplayFormat(DataFormatString = "{0:N2}", ApplyFormatInEditMode = false)]
-        public string Stock { get; set; }
+        public int Stock { get; set; }
     }
 }

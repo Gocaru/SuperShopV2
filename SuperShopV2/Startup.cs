@@ -31,6 +31,8 @@ namespace SuperShopV2
 
             });
 
+            services.AddTransient<SeedDb>();
+
             services.AddControllersWithViews();
         }
 
