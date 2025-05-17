@@ -1,7 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
 using SuperShopV2.Data;
 using SuperShopV2.Data.Entities;
+using SuperShopV2.Helpers;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace SuperShopV2.Controllers
@@ -9,16 +12,18 @@ namespace SuperShopV2.Controllers
     public class ProductsController : Controller
     {
         private readonly IProductRepository _productRepository;
+        private readonly IUserHelper _userHelper;
 
-        public ProductsController(IProductRepository productRepository)
+        public ProductsController(IProductRepository productRepository, IUserHelper userHelper)
         {
             _productRepository = productRepository;
+            _userHelper = userHelper;
         }
 
         // GET: Products
         public IActionResult Index()
         {
-            return View(_productRepository.GetAll());
+            return View(_productRepository.GetAll().OrderBy(p => p.Name));
         }
 
         // GET: Products/Details/5
@@ -53,6 +58,8 @@ namespace SuperShopV2.Controllers
         {
             if (ModelState.IsValid)
             {
+                //ToDo: modificar para o user que estiver logado
+                product.User = await _userHelper.GetUserByEmailAsync("goncalorusso@gmail.com");
                 await _productRepository.CreateAsync(product);
                 return RedirectToAction(nameof(Index));
             }
@@ -91,6 +98,8 @@ namespace SuperShopV2.Controllers
             {
                 try
                 {
+                    //ToDo: Modificar para o user que estiver logado
+                    product.User = await _userHelper.GetUserByEmailAsync("goncalorusso@gmail.com");
                     await _productRepository.UpdateAsync(product);
                 }
                 catch (DbUpdateConcurrencyException)
