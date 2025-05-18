@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using System.Threading.Tasks;
+using Microsoft.AspNetCore.Identity;
 using SuperShopV2.Data.Entities;
-using System.Threading.Tasks;
+using SuperShopV2.Models;
+
 
 namespace SuperShopV2.Helpers
 {
@@ -9,5 +11,9 @@ namespace SuperShopV2.Helpers
         Task<User> GetUserByEmailAsync(string email);
 
         Task<IdentityResult> AddUserAsync(User user, string password);
+
+        Task<SignInResult> LoginAsync(LoginViewModel model);
+
+        Task LogoutAsync();
     }
 }
