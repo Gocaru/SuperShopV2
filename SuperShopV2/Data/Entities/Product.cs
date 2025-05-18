@@ -15,7 +15,9 @@ namespace SuperShopV2.Data.Entities
         public decimal Price { get; set; }
 
         [Display(Name="Image")]
-        public string ImageUrl { get; set; }
+        //public string ImageUrl { get; set; }
+        //Passo a ter o Id da imagem que o Blob me vai dar:
+        public Guid ImageId { get; set; }
 
         [Display(Name = "Last Purchase")]
         public DateTime? LastPurchase { get; set; }
@@ -31,17 +33,8 @@ namespace SuperShopV2.Data.Entities
 
         public User User { get; set; }
 
-        public string ImageFullPath
-        {
-            get
-            {
-                if (string.IsNullOrEmpty(ImageUrl))
-                {
-                    return null;
-                }
-
-                return $"https://localhost:44382{ImageUrl.Substring(1)}";
-            }
-        }
+        public string ImageFullPath => ImageId == Guid.Empty
+            ? "/images/noimage.png"
+            : $"https://supershopgr.blob.core.windows.net/products/{ImageId}";
     }
 }
