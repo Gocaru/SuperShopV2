@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 using SuperShopV2.Data.Entities;
 using SuperShopV2.Helpers;
 using SuperShopV2.Models;
@@ -173,6 +174,12 @@ namespace SuperShopV2.Controllers
 
             return this.View(model);
         }
+
+        public IActionResult NotAuthorized()
+        {
+            return View();   
+        }
+
 
 
     }
