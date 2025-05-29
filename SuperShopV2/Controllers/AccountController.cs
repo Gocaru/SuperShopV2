@@ -84,6 +84,8 @@ namespace SuperShopV2.Controllers
                         return View(model); //Caso exitam campos não preenchidos corretamente, passo o modelo como foi preenchido pelo user, para alterar só o que for necessário
                     }
 
+                    await _userHelper.AddUserToRoleAsync(user, "Customer");
+
                     var loginViewModel = new LoginViewModel //caso consiga adicionar
                     {
                         Password = model.Password,
