@@ -22,10 +22,14 @@ namespace SuperShopV2.Data
 
         public async Task SeedAsync()
         {
-            await _context.Database.EnsureCreatedAsync();
+            await _context.Database.EnsureCreatedAsync();   //Vê se existe BD; se não existe cria-a
 
-            var user = await _userHelper.GetUserByEmailAsync("goncalorusso@gmail.com");
-            if(user == null) 
+            await _userHelper.CheckRoleAsync("Admin");      //Vê se exite o Role "Admin"; se não existe cria-o
+            await _userHelper.CheckRoleAsync("Customer");   //Vê se exite o Role "Customer"; se não existe cria-o
+
+
+            var user = await _userHelper.GetUserByEmailAsync("goncalorusso@gmail.com"); //vou buscar este user
+            if(user == null)    //se não exitir, crio o user
             {
                 user = new User
                 {
@@ -36,13 +40,21 @@ namespace SuperShopV2.Data
                     PhoneNumber = "123456788"
                 };
 
-                var result = await _userHelper.AddUserAsync(user, "654321");    //Cria este utilizador com esta Password
+                var result = await _userHelper.AddUserAsync(user, "654321");    //Adiciono este utilizador com esta Password
                 if (result != IdentityResult.Success)
                 {
                     throw new InvalidOperationException("Could not create the user in seeder");   
                 }
 
+                await _userHelper.AddUserToRoleAsync(user, "Admin");    //Associo o role Admin ao user que criei
             }
+
+            var isInRole = await _userHelper.IsUserInRoleAsync(user, "Admin");  //Verifico se o user tem o role Admin (não corremos o risco de ter algum user sem role)
+            if (!isInRole)
+            {
+                await _userHelper.AddUserToRoleAsync(user, "Admin");
+            }
+
 
             if(!_context.Products.Any())
             {
