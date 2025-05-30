@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using SuperShopV2.Data.Entities;
 using SuperShopV2.Helpers;
 using System;
@@ -22,7 +23,8 @@ namespace SuperShopV2.Data
 
         public async Task SeedAsync()
         {
-            await _context.Database.EnsureCreatedAsync();   //Vê se existe BD; se não existe cria-a
+            await _context.Database.MigrateAsync();   //Vê se existe BD; se não existe cria-a
+                                                      //Uso "MigrateAsync" para quando for popular a base de Dados com o Seed, vai correr as migrações
 
             await _userHelper.CheckRoleAsync("Admin");      //Vê se exite o Role "Admin"; se não existe cria-o
             await _userHelper.CheckRoleAsync("Customer");   //Vê se exite o Role "Customer"; se não existe cria-o

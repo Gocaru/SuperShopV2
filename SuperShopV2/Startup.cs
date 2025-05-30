@@ -55,7 +55,11 @@ namespace SuperShopV2
             services.AddScoped<IConverterHelper, ConverterHelper>();
 
 
-            services.AddScoped<IProductRepository, ProductRepository>();
+            services.AddScoped<IProductRepository, ProductRepository>();    //"Quando alguém pedir um IProductRepository, fornece-lhe uma instância de ProductRepository"
+                                                                            //Para que isto funcione:
+                                                                            //A classe ProductRepository tem obrigatoriamente de implementar a interface IProductRepository;
+
+            services.AddScoped<IOrderRepository, OrderRepository>();
 
             services.ConfigureApplicationCookie(options =>
             {
