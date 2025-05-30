@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SuperShopV2.Data.Entities;
 using SuperShopV2.Helpers;
+using SuperShopV2.Models;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -18,6 +19,46 @@ namespace SuperShopV2.Data
         {
             _context = context;
             _userHelper = userHelper;
+        }
+
+        public async Task AddItemToOrderAsync(AddItemViewModel model, string userName)
+        {
+            var user = await _userHelper.GetUserByEmailAsync(userName); //Verifico se o user existe
+            if (user == null)
+            {
+                return;
+            }
+
+            var product = await _context.Products.FindAsync(model.ProductId);   //Verifico se o produto existe
+            if (product == null)
+            {
+                return;
+            }
+
+            var orderDetailTemp = await _context.OrderDetailsTemp               //Crio este objeto ("orderDetailTemp"), com os dados que recebo da tabela OrderDetailsTemp, em que o user e o produto foram os que foram passados e existem
+                .Where(odt => odt.User == user && odt.Product == product)
+                .FirstOrDefaultAsync();
+
+            if (orderDetailTemp == null)
+            {
+                orderDetailTemp = new OrderDetailTemp
+                {
+                    Price = product.Price,
+                    Product = product,
+                    Quantity = model.Quantity,
+                    User = user,
+                };
+
+                _context.OrderDetailsTemp.Add(orderDetailTemp);     //Crio o objeto na tabela (se não exitir nenhum)
+            }
+            else
+            {
+                orderDetailTemp.Quantity += model.Quantity;             //Se já existe o produto, soma-se a quantidade
+                _context.OrderDetailsTemp.Update(orderDetailTemp);      //E faço o update da tabela
+
+            }
+
+            await _context.SaveChangesAsync();  
         }
 
         public async Task<IQueryable<OrderDetailTemp>> GetDetailTempsAsync(string userName)
@@ -58,6 +99,22 @@ namespace SuperShopV2.Data
                 .OrderByDescending(o => o.OrderDate);
 
 
+        }
+
+        public async Task ModifyOrderDetailTempQuantityAsync(int id, double quantity)
+        {
+            var orderDetailTemp = await _context.OrderDetailsTemp.FindAsync(id);
+            if (orderDetailTemp == null)
+            {
+                return;
+            }
+
+            orderDetailTemp.Quantity += quantity;
+            if(orderDetailTemp.Quantity >0)     //Só vou guardar se a quantidade for maior do que zero
+            {
+                _context.OrderDetailsTemp.Update(orderDetailTemp);
+                await _context.SaveChangesAsync();
+            }
         }
     }
 }
