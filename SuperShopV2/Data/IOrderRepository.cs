@@ -16,6 +16,8 @@ namespace SuperShopV2.Data
 
         Task ModifyOrderDetailTempQuantityAsync(int id, double quantity);   //Tarefa para modificar items
 
+        Task DeleteDetailTempAsync(int id);
+
 
     }
 }
