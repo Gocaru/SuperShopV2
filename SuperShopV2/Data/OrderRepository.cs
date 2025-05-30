@@ -20,6 +20,20 @@ namespace SuperShopV2.Data
             _userHelper = userHelper;
         }
 
+        public async Task<IQueryable<OrderDetailTemp>> GetDetailTempsAsync(string userName)
+        {
+            var user = await _userHelper.GetUserByEmailAsync(userName); //Verifico sempre o user
+            if (user == null)
+            {
+                return null;   
+            }
+
+            return _context.OrderDetailsTemp                // Vai à tabela Orders Details         
+                .Include(p => p.Product)                    //Inclui todos os produtos
+                .Where(o => o.User == user)                 //De um determinado user
+                .OrderByDescending(o => o.Product.Name);    //Ordena pelo nome do Produto
+        }
+
         public async Task<IQueryable<Order>> GetOrderAsync(string userName) //Para ir buscar as encomendas
         {
             var user = await _userHelper.GetUserByEmailAsync(userName);

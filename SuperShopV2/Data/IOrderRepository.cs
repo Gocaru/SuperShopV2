@@ -8,6 +8,8 @@ namespace SuperShopV2.Data
     {
         Task<IQueryable<Order>> GetOrderAsync(string userName);     //Tarefa que devolve uma tabela de orders para ir buscar todas as encomendas de um determinado user
 
+        Task<IQueryable<OrderDetailTemp>> GetDetailTempsAsync(string userName);
+
 
     }
 }
