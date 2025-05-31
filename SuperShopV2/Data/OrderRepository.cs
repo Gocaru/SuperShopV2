@@ -2,6 +2,7 @@
 using SuperShopV2.Data.Entities;
 using SuperShopV2.Helpers;
 using SuperShopV2.Models;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -61,6 +62,44 @@ namespace SuperShopV2.Data
             await _context.SaveChangesAsync();  
         }
 
+        public async Task<bool> ConfirmOrderAsync(string userName)
+        {
+            var user = await _userHelper.GetUserByEmailAsync(userName);
+            if(user == null) 
+            { 
+                return false; 
+            }
+
+            var orderTmps = await _context.OrderDetailsTemp
+                .Include(o=> o.Product)
+                .Where(o => o.User == user)
+                .ToListAsync();
+
+            if (orderTmps == null || orderTmps.Count == 0)
+            {
+                return false;
+            }
+
+            var details = orderTmps.Select(o => new OrderDetail     //Construo o Order Details (passo do order detail temporário para o OrderDetail)
+            {
+                Price=o.Price,
+                Product = o.Product,
+                Quantity = o.Quantity,
+            }).ToList();
+
+            var order = new Order       //Construo o Order
+            {
+                OrderDate = DateTime.UtcNow,
+                User = user,
+                Items = details
+            };
+
+            await CreateAsync(order);
+            _context.OrderDetailsTemp.RemoveRange(orderTmps);   //Removo o order details temporário
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
         public async Task DeleteDetailTempAsync(int id)
         {
             var orderDetailTemp = await _context.OrderDetailsTemp.FindAsync(id);
@@ -98,6 +137,7 @@ namespace SuperShopV2.Data
             if(await _userHelper.IsUserInRoleAsync(user, "Admin"))  //"O User que veio é Admin?"
             {
                 return _context.Orders
+                    .Include(o => o.User)       //Porque preciso tb que o Admin tenha acesso ao nome do utilizador que fez a encomenda (na tabela Orders só tenho o UserId, não tenho o nome do user)
                     .Include(o => o.Items)
                     .ThenInclude(p => p.Product)
                     .OrderByDescending(o => o.OrderDate);

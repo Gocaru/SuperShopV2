@@ -18,6 +18,8 @@ namespace SuperShopV2.Data
 
         Task DeleteDetailTempAsync(int id);
 
+        Task<bool> ConfirmOrderAsync(string userName);  //Método para confirmar a encomenda
+
 
     }
 }
