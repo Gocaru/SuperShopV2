@@ -1,13 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
 using SuperShopV2.Data;
-using SuperShopV2.Data.Entities;
 using SuperShopV2.Helpers;
 using SuperShopV2.Models;
 using System;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -21,7 +18,7 @@ namespace SuperShopV2.Controllers
         private readonly IConverterHelper _converterHelper;
 
         public ProductsController(
-            IProductRepository productRepository, 
+            IProductRepository productRepository,
             IUserHelper userHelper,
             IBlobHelper blobHelper,
             IConverterHelper converterHelper)
@@ -56,7 +53,6 @@ namespace SuperShopV2.Controllers
         }
 
         // GET: Products/Create
-        [Authorize(Roles = "Admin")]  //Só o Admin vai ter permissões para criar produtos
         public IActionResult Create()
         {
             return View();
@@ -78,7 +74,7 @@ namespace SuperShopV2.Controllers
                     imageId = await _blobHelper.UploadBlobAsync(model.ImageFile, "products");
                 }
 
-                var product = _converterHelper.ToProduct(model,imageId,true);
+                var product = _converterHelper.ToProduct(model, imageId, true);
 
                 product.User = await _userHelper.GetUserByEmailAsync(this.User.Identity.Name);
                 await _productRepository.CreateAsync(product);
@@ -134,7 +130,7 @@ namespace SuperShopV2.Controllers
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (! await _productRepository.ExistAsync(model.Id))
+                    if (!await _productRepository.ExistAsync(model.Id))
                     {
                         return NotFound();
                     }
@@ -169,11 +165,32 @@ namespace SuperShopV2.Controllers
         // POST: Products/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var product = await _productRepository.GetByIdAsync(id);
-            await _productRepository.DeleteAsync(product);
-            return RedirectToAction(nameof(Index));
+
+            try
+            {
+                //throw new Exception("Exceção de Teste");
+                await _productRepository.DeleteAsync(product);
+                return RedirectToAction(nameof(Index));
+            }
+            catch (DbUpdateException ex)
+            {
+
+                if (ex.InnerException != null && ex.InnerException.Message.Contains("DELETE"))  //Confirmar se é um delete, e não um update (a DbUpdateException pode ser um delete ou um update)
+                                                                                                //Consigo assim ir buscar o erro específico
+                {
+                    ViewBag.ErrorTitle = $"{product.Name} provavelmente está a ser usado!!";
+                    ViewBag.ErrorMessage = $"{product.Name} não pode ser apagado visto haverem encomendas que o usam.</br></br>" +
+                        $"Experimente primeiro apagar todas as encomendas que estão a usar o produto," +
+                        $" e torne novamente a apagá-lo";
+                }
+
+                return View("Error");
+            }
+
         }
 
         public IActionResult ProductNotFound()
