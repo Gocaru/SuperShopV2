@@ -31,6 +31,12 @@ namespace SuperShopV2.Data
         /// </summary>
         public DbSet<OrderDetailTemp> OrderDetailsTemp { get; set; }
 
+        public DbSet<Country> Countries { get; set; }
+
+
+        public DbSet<City> Cities { get; set; }
+
+
         /// <summary>
         /// Inicializa uma nova instância de <see cref="DataContext"/> com as opções especificadas.
         /// </summary>

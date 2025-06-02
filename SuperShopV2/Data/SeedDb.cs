@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using SuperShopV2.Data.Entities;
 using SuperShopV2.Helpers;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -29,6 +30,22 @@ namespace SuperShopV2.Data
             await _userHelper.CheckRoleAsync("Admin");      //Vê se exite o Role "Admin"; se não existe cria-o
             await _userHelper.CheckRoleAsync("Customer");   //Vê se exite o Role "Customer"; se não existe cria-o
 
+            if(!_context.Countries.Any())
+            {
+                var cities = new List<City>();
+                cities.Add(new City { Name = "Lisboa" });
+                cities.Add(new City { Name = "Porto" });
+                cities.Add(new City { Name = "Faro" });
+
+                _context.Countries.Add(new Country
+                {
+                    Cities = cities,
+                    Name = "Portugal"
+                });
+
+                await _context.SaveChangesAsync();
+            }
+
 
             var user = await _userHelper.GetUserByEmailAsync("goncalorusso@gmail.com"); //vou buscar este user
             if(user == null)    //se não exitir, crio o user
@@ -39,7 +56,10 @@ namespace SuperShopV2.Data
                     LastName = "Russo",
                     Email = "goncalorusso@gmail.com",
                     UserName = "goncalorusso@gmail.com",
-                    PhoneNumber = "123456788"
+                    PhoneNumber = "123456788",
+                    Address = "Rua da Liberdade, 33",
+                    CityId = _context.Countries.FirstOrDefault().Cities.FirstOrDefault().Id,
+                    City = _context.Countries.FirstOrDefault().Cities.FirstOrDefault()
                 };
 
                 var result = await _userHelper.AddUserAsync(user, "654321");    //Adiciono este utilizador com esta Password

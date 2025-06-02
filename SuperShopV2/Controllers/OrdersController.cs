@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using SuperShopV2.Data;
 using SuperShopV2.Models;
+using System;
 using System.Threading.Tasks;
 
 namespace SuperShopV2.Controllers
@@ -98,6 +99,54 @@ namespace SuperShopV2.Controllers
 
             return RedirectToAction("Create");
         }
+
+
+        /// <summary>
+        /// Apresenta o formulário para introdução da data de entrega de uma encomenda.
+        /// </summary>
+        /// <param name="id">Identificador da encomenda a ser entregue.</param>
+        /// <returns>Vista com o formulário de entrega ou NotFound se a encomenda não existir.</returns>
+        public async Task<IActionResult> Deliver(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var order = await _orderRepository.GetByIdAsync(id.Value);
+            if (order == null)
+            {
+                return NotFound();
+            }
+
+            var model = new DeliveryViewModel
+            {
+                Id = order.Id,
+                DeliveryDate = DateTime.Today
+            };
+
+            return View(model);
+        }
+
+
+        /// <summary>
+        /// Regista a data de entrega da encomenda após submissão do formulário.
+        /// </summary>
+        /// <param name="model">Modelo com os dados da entrega.</param>
+        /// <returns>Redireciona para a lista de encomendas se bem-sucedido; caso contrário, reapresenta a vista com o modelo inválido.</returns>
+        [HttpPost]
+        public async Task<IActionResult> Deliver(DeliveryViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                await _orderRepository.DeliveryOrder(model);
+                return RedirectToAction("Index");
+            }
+
+            return View();
+        }
+
+
 
     }
 }

@@ -60,6 +60,7 @@ namespace SuperShopV2
                                                                             //A classe ProductRepository tem obrigatoriamente de implementar a interface IProductRepository;
 
             services.AddScoped<IOrderRepository, OrderRepository>();
+            services.AddScoped<ICountryRepository, CountryRepository>();
 
             services.ConfigureApplicationCookie(options =>
             {
