@@ -1,6 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.Data.OData.Query.SemanticAst;
+using Microsoft.EntityFrameworkCore;
 using SuperShopV2.Data.Entities;
 using SuperShopV2.Models;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -87,7 +90,43 @@ namespace SuperShopV2.Data
                 .FirstOrDefaultAsync();
         }
 
+        public IEnumerable<SelectListItem> GetComboCountries()
+        {
+            var list = _context.Countries.Select(c => new SelectListItem
+            {
+                Text = c.Name,
+                Value = c.Id.ToString()
+            }).OrderBy(list => list.Text).ToList();
 
+            list.Insert(0, new SelectListItem
+            {
+                Text = "(Select a country...)",
+                Value = "0"
+            });
 
+            return list;
+        }
+
+        public IEnumerable<SelectListItem> GetComboCities(int countryId)
+        {
+            var country = _context.Countries.Find(countryId);
+            var list = new List<SelectListItem>();
+            if (country != null)
+            {
+                list = _context.Cities.Select(c => new SelectListItem
+                {
+                    Text = c.Name,
+                    Value = c.Id.ToString()
+                }).OrderBy(list => list.Text).ToList();
+
+                list.Insert(0, new SelectListItem
+                {
+                    Text = "(Select a city...)",
+                    Value = "0"
+                });
+            }
+
+            return list;
+        }
     }
 }

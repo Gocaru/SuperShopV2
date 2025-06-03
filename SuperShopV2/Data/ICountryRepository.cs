@@ -21,5 +21,11 @@ namespace SuperShopV2.Data
 
         Task<int> DeleteCityAsync(City city);
 
+        IEnumerable<SelectListItem> GetComboCountries();    //Para preencher a combobox dos countries
+
+        IEnumerable<SelectListItem> GetComboCities(int countryId);  //Para preencher a combobox das cities
+
+        Task<Country> GetCountryAsync(City city);       //Para devolver um Country, em função de uma city
+
     }
 }
