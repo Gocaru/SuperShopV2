@@ -1,8 +1,8 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using System.Threading.Tasks;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 using SuperShopV2.Data.Entities;
 using SuperShopV2.Models;
-using System.Threading.Tasks;
 
 namespace SuperShopV2.Helpers
 {
@@ -78,6 +78,14 @@ namespace SuperShopV2.Helpers
         public async Task<IdentityResult> UpdateUserAsync(User user)
         {
             return await _userManager.UpdateAsync(user);
+        }
+
+        public async Task<SignInResult> ValidatePasswordAsync(User user, string password)
+        {
+            return await _signInManager.CheckPasswordSignInAsync(
+                user,
+                password,
+                false);     //Coloco falso para não bloquear ao final de várias tentativas (aceitável nesta fase; na fase de produção deve-se passar a true 
         }
     }
 }

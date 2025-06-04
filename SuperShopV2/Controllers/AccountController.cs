@@ -1,11 +1,16 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
 using SuperShopV2.Data;
 using SuperShopV2.Data.Entities;
 using SuperShopV2.Helpers;
 using SuperShopV2.Models;
+using System;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Security.Claims;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace SuperShopV2.Controllers
@@ -13,13 +18,16 @@ namespace SuperShopV2.Controllers
     public class AccountController : Controller
     {
         private readonly IUserHelper _userHelper;
+        private readonly IConfiguration _configuration;
         private readonly ICountryRepository _countryRepository;
 
         public AccountController(
             IUserHelper userHelper,
+            IConfiguration configuration,
             ICountryRepository countryRepository)
         {
             _userHelper = userHelper;
+            _configuration = configuration;
             _countryRepository = countryRepository;
         }
 
@@ -137,7 +145,7 @@ namespace SuperShopV2.Controllers
                 model.PhoneNumber = user.PhoneNumber;
 
                 var city = await _countryRepository.GetCityAsync(user.CityId);
-                if (city != null) 
+                if (city != null)
                 {
                     var country = await _countryRepository.GetCountryAsync(city);
                     if (country != null)
@@ -166,12 +174,12 @@ namespace SuperShopV2.Controllers
                 if (user != null)
                 {
                     var city = await _countryRepository.GetCityAsync(model.CityId);
-                  
+
 
                     user.FirstName = model.FirstName;
                     user.LastName = model.LastName;
                     user.Address = model.Address;
-                    user.PhoneNumber = model.PhoneNumber;   
+                    user.PhoneNumber = model.PhoneNumber;
                     user.CityId = model.CityId;
                     user.City = city;
 
@@ -223,9 +231,59 @@ namespace SuperShopV2.Controllers
             return this.View(model);
         }
 
+
+        [HttpPost]
+        public async Task<IActionResult> CreateToken([FromBody] LoginViewModel model)
+        {
+            if (this.ModelState.IsValid)    //Ver se tenho um user e uma password
+            {
+                var user = await _userHelper.GetUserByEmailAsync(model.Username);       //ver se o email existe
+                if (user != null)
+                {
+                    var result = await _userHelper.ValidatePasswordAsync(   //valido a password.
+                        user,
+                        model.Password);
+
+                    if (result.Succeeded)   //Se for alidada com sucesso,
+                    {
+                        var claims = new[]
+                        {
+                            new Claim(JwtRegisteredClaimNames.Sub, user.Email),
+                            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+                        };
+
+                        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Tokens:Key"]));       //Agarra na chave definida no appsettings.json,
+                                                                                                                        //passa-a para bytes ("GetBytes") utilizando o tipo de codificação Encoding.UTF8.
+                                                                                                                        //Tudo isto deve ser feito utilizando este tipo de encriptação: SymmetricSecurityKey 
+                        var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);   //Agarra na chave para gera o token
+                                                                                                        //utilizando o algoritmo de encriptação "HmacSha256" (é o mais usado)
+                        var token = new JwtSecurityToken(       //O token vai ser do tipo "Jwt"
+                            _configuration["Tokens:Issuer"],    //indico os parâmterso de configuração
+                            _configuration["Tokens:Audience"],
+                            claims,
+                            expires: DateTime.UtcNow.AddDays(15),   //Indico que o token é válido durante 15 dias
+                            signingCredentials: credentials);
+                        var results = new       //Mando um objeto anónimo (sem nome)
+                        {
+                            //que tem duas propriedades só com get:
+                            token = new JwtSecurityTokenHandler().WriteToken(token),    //aqui escrevo o token criado anteriormente
+                            expiration = token.ValidTo                                  //aqui recebe a validade definida anteriormente
+                        };
+
+                        return this.Created(string.Empty, results);
+                    }
+                }
+            }
+
+            return BadRequest();
+        }
+
+
+
+
         public IActionResult NotAuthorized()
         {
-            return View();   
+            return View();
         }
 
 

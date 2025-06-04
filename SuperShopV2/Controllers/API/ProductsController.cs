@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SuperShopV2.Data;
 
@@ -6,6 +7,7 @@ namespace SuperShopV2.Controllers.API
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]      //Indico que precisa ser autenticado através de um Jwt Bearer Token
     public class ProductsController : Controller
     {
         private readonly IProductRepository _productRepository;
