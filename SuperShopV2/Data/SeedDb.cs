@@ -62,13 +62,15 @@ namespace SuperShopV2.Data
                     City = _context.Countries.FirstOrDefault().Cities.FirstOrDefault()
                 };
 
-                var result = await _userHelper.AddUserAsync(user, "654321");    //Adiciono este utilizador com esta Password
+                var result = await _userHelper.AddUserAsync(user, "123456");    //Adiciono este utilizador com esta Password
                 if (result != IdentityResult.Success)
                 {
                     throw new InvalidOperationException("Could not create the user in seeder");   
                 }
 
                 await _userHelper.AddUserToRoleAsync(user, "Admin");    //Associo o role Admin ao user que criei
+                var token = await _userHelper.GenerateEmailConfirmationTokenAsync(user);
+                await _userHelper.ConfirmEmailAsync(user, token);
             }
 
             var isInRole = await _userHelper.IsUserInRoleAsync(user, "Admin");  //Verifico se o user tem o role Admin (não corremos o risco de ter algum user sem role)

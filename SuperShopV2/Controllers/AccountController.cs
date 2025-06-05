@@ -18,15 +18,18 @@ namespace SuperShopV2.Controllers
     public class AccountController : Controller
     {
         private readonly IUserHelper _userHelper;
+        private readonly IMailHelper _mailHelper;
         private readonly IConfiguration _configuration;
         private readonly ICountryRepository _countryRepository;
 
         public AccountController(
             IUserHelper userHelper,
+            IMailHelper mailHelper,
             IConfiguration configuration,
             ICountryRepository countryRepository)
         {
             _userHelper = userHelper;
+            _mailHelper = mailHelper;
             _configuration = configuration;
             _countryRepository = countryRepository;
         }
@@ -112,19 +115,23 @@ namespace SuperShopV2.Controllers
                         return View(model); //Caso exitam campos não preenchidos corretamente, passo o modelo como foi preenchido pelo user, para alterar só o que for necessário
                     }
 
-                    await _userHelper.AddUserToRoleAsync(user, "Customer");
+                    string myToken = await _userHelper.GenerateEmailConfirmationTokenAsync(user);   //Gera o token
 
-                    var loginViewModel = new LoginViewModel //caso consiga adicionar
+                    string tokenLink = Url.Action("ConfirmEmail", "Account", new        //Gero um link através da action ConfirmEmail, que vai ficar no Account. Essa action vai receber um userid e um token.
+                                                                                        //Estou dentro do mesmo controlador a passar uma action para a outra, mas usando o protocolo Http (por causa dos tokens)
                     {
-                        Password = model.Password,
-                        RememberMe = false,
-                        Username = model.Username,
-                    };
+                        userid = user.Id,
+                        token = myToken
+                    }, protocol: HttpContext.Request.Scheme);
 
-                    var result2 = await _userHelper.LoginAsync(loginViewModel); //Tenta logar
-                    if (result2.Succeeded)
+                    Response response = _mailHelper.SendEmail(model.Username, "Email confirmation", $"<h1>Email Confirmation</h1>" +          //Mando o email de confirmação para o user
+                        $"To allow the user, " +
+                        $"please click in this link:</br></br><a href = \"{tokenLink}\">Confirm Email</a>");        //com o token
+
+                    if (response.IsSuccess)
                     {
-                        return RedirectToAction("Index", "Home");
+                        ViewBag.Message = "The instructions to allow access to the platform have been sent to email";
+                        return View(model);
                     }
 
                     ModelState.AddModelError(string.Empty, "The user couldn't be logged.");
@@ -279,7 +286,27 @@ namespace SuperShopV2.Controllers
         }
 
 
+        public async Task<IActionResult> ConfirmEmail(string userId, string token)
+        {
+            if(string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(token))
+            {
+                return NotFound();
+            }
 
+            var user = await _userHelper.GetUserByIdAsync(userId);
+            if(user == null) 
+            {
+                return NotFound();
+            }
+
+            var result = await _userHelper.ConfirmEmailAsync(user, token);
+            if (!result.Succeeded)
+            {
+                return NotFound();
+            }
+
+            return View();
+        }
 
         public IActionResult NotAuthorized()
         {
